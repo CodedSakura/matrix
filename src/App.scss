@@ -2,6 +2,7 @@ body {
   background-color: #212121;
   color: rgba(white, .9);
   margin: 0;
+  font-family: Roboto, sans-serif;
 }
 
 .container {
@@ -19,7 +20,7 @@ body {
 }
 .options-panel {
   flex: 0 0 25%;
-  min-width: 300px;
+  min-width: 400px;
   display: flex;
   flex-direction: column;
   > *:not(.separator) {
@@ -31,6 +32,66 @@ body {
 
 .transformations {
   overflow: auto;
+  input {
+    background-color: rgba(black, .2);
+    color: rgba(white, .85);
+    border: 1px solid rgba(black, .4);
+    font-size: 1.1em;
+    max-width: 10rem;
+    &[type=number] {
+      font-size: .9em;
+      width: 4em;
+    }
+  }
+  > * {
+    display: flex;
+    > * {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      &:not(.matrix) {
+        flex-grow: 1;
+      }
+      &:not(:first-child) {
+        text-align: center;
+      }
+      &:first-child {
+        flex-grow: 3;
+      }
+    }
+  }
+  .matrix {
+    $color: gray;
+    $size: 2px;
+    $length: 6px;
+    background-image: linear-gradient($color, $color), linear-gradient($color, $color), linear-gradient($color, $color), linear-gradient($color, $color);
+
+    background-repeat: no-repeat;
+    background-size: $length $size;
+    background-position: 0 0, 0 100%, 100% 0, 100% 100%;
+
+    border: solid $color;
+    text-align: justify;
+    border-width: 0 $size;
+    display: inline-flex;
+    vertical-align: top;
+    padding: 5px 5px;
+    margin: 0 2px 4px;
+  }
+  .add-new {
+    justify-content: center;
+    padding: .5em;
+    margin: .25em;
+    border: 2px solid rgba(black, .4);
+    transition: all .15s ease;
+    cursor: pointer;
+    &:hover {
+      background-color: rgba(black, .1);
+      &:active {
+        background-color: rgba(black, .3);
+      }
+    }
+  }
 }
 
 .separator {
