@@ -24,6 +24,8 @@ interface State {
   maxChance: number
 }
 
+const matrixToPoint = (m: Matrix): Point => ({x: m.data[0][0], y: m.data[1][0]});
+
 export default class extends React.Component<{}, State> {
   state: State = {
     transformations: [{multiplicand: new Matrix([[1, 2], [3, 4]]), additive: new Matrix([[1], [2]]), chance: 100}],
@@ -37,8 +39,34 @@ export default class extends React.Component<{}, State> {
     display: Display.SVG,
     maxChance: 100
   };
+  // drawCont: HTMLDivElement | null = null;
 
   changeTransformations = (k: number) => (t: Transformation) => this.setState(s => {s.transformations[k] = t; return s});
+
+  reset = () => {
+    const {y, x} = this.state.startingPoint;
+    const current = new Matrix([[x], [y]]);
+    this.setState({points: [], currentPoint: current});
+  };
+  generatePoints = (count: number) => {
+    let {points, currentPoint, transformations, maxChance} = this.state;
+    while (count--) {
+      let r = Math.random() * maxChance;
+      for (const t of transformations) {
+        if (r - t.chance <= 0) {
+          // console.log(t.multiplicand, currentPoint, t.additive);
+          currentPoint = t.multiplicand.mult(currentPoint).add(t.additive);
+          // console.log(currentPoint);
+          points.push(matrixToPoint(currentPoint));
+        } else r -= t.chance;
+      }
+    }
+    this.setState({points: points, currentPoint: currentPoint});
+  };
+
+  newTransformation = () => {
+    this.setState(s => ({transformations: [...s.transformations, {multiplicand: new Matrix([[0,0],[0,0]]), additive: new Matrix([[0,0],[0,0]]), chance: 0}]}))
+  };
 
   render() {
     const {display, offset, points, transformations, maxChance} = this.state;
@@ -46,15 +74,17 @@ export default class extends React.Component<{}, State> {
       <div className="draw-board">
         {(() => {
           switch (display) {
-            case Display.Raster:
+            case Display.Raster: {
               return <canvas/>;
-            case Display.SVG:
+            }
+            case Display.SVG: {
               const {scale: {width: sx, height: sy}, offset: {x: ox, y: oy}} = offset;
               return <svg>
                 <g transform={`scale(${sx} ${sy}) translate(${ox} ${oy})`}>
                   {points.map((v, k) => <circle cx={v.x} cy={v.y} r={1} key={k}/>)}
                 </g>
               </svg>;
+            }
           }
         })()}
       </div>
@@ -62,11 +92,13 @@ export default class extends React.Component<{}, State> {
       <div className="options-panel">
         <div className="transformations">
           {transformations.map((v, k) => <TransformationComp key={k} data={v} id={k} max={maxChance} onChange={this.changeTransformations(k)}/>)}
-          <div className="add-new">Add new transformation</div>
+          <div className="add-new" onClick={this.newTransformation}>Add new transformation</div>
         </div>
         <div className="separator"/>
         <div className="options">
           {document.location.hash}<br/>
+          <button onClick={() => this.generatePoints(3)}>Generate 3 points</button>
+          <button onClick={this.reset}>clear</button>
         </div>
       </div>
     </div>
@@ -126,8 +158,8 @@ class TransformationComp extends React.Component<TransformationProps> {
   }
 }
 
-class ScrollableNumberInput extends React.Component<{[x: string]: any}> {
-  render() {
-    return <input {...this.props}/>
-  }
-}
+// class ScrollableNumberInput extends React.Component<{[x: string]: any}> {
+//   render() {
+//     return <input {...this.props}/>
+//   }
+// }

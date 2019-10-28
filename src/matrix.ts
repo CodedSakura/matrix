@@ -15,13 +15,13 @@ export class Matrix {
   add = (b: Matrix): Matrix => Matrix.add(this, b);
 
   static add = (a: Matrix, b: Matrix): Matrix => {
-    if (a.w !== b.w || a.h !== a.w) throw new Error("Size doesn't match");
+    if (a.w !== b.w || a.h !== b.h) throw new Error("Size doesn't match");
     const w = a.w, h = a.h;
     const data: number[][] = [];
     for (let y = 0; y < h; y++) {
       data[y] = [];
       for (let x = 0; x < w; x++) {
-        data[y][x] = a.data[x][y] + b.data[x][y];
+        data[y][x] = a.data[y][x] + b.data[y][x];
       }
     }
     return new Matrix(data);
@@ -36,6 +36,7 @@ export class Matrix {
     for (let i = 0; i < n; i++) {
       data[i] = [];
       for (let j = 0; j < p; j++) {
+        data[i][j] = 0;
         for (let k = 0; k < m; k++) {
           data[i][j] += a.data[i][k] * b.data[k][j];
         }
