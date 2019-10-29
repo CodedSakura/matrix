@@ -28,20 +28,26 @@ const matrixToPoint = (m: Matrix): Point => ({x: m.data[0][0], y: m.data[1][0]})
 
 export default class extends React.Component<{}, State> {
   state: State = {
-    transformations: [{multiplicand: new Matrix([[1, 2], [3, 4]]), additive: new Matrix([[1], [2]]), chance: 100}],
+    transformations: [
+      {multiplicand: new Matrix([[.5, 0], [0, .5]]), additive: new Matrix([[0], [0]]), chance: 100},
+      {multiplicand: new Matrix([[.5, 0], [0, .5]]), additive: new Matrix([[50], [0]]), chance: 100},
+      {multiplicand: new Matrix([[.5, 0], [0, .5]]), additive: new Matrix([[0], [50]]), chance: 100},
+    ],
     offset: {
       scale:  {width: 1, height: 1},
       offset: {x: 0, y: 0}
     },
     points: [],
-    currentPoint: new Matrix([[0], [0]]),
-    startingPoint: {x: 0, y: 0},
+    currentPoint: new Matrix([[10], [10]]),
+    startingPoint: {x: 10, y: 10},
     display: Display.SVG,
-    maxChance: 100
+    maxChance: 300
   };
-  // drawCont: HTMLDivElement | null = null;
+  drawCont: HTMLDivElement | undefined;
+  startPoint: Point|undefined;
 
   changeTransformations = (k: number) => (t: Transformation) => this.setState(s => {s.transformations[k] = t; return s});
+  changeStartingPoint = (n: "x"|"y") => ({target: {value}}: {target: HTMLInputElement}) => this.setState(s => ({startingPoint: {...s.startingPoint, [n]: value}}));
 
   reset = () => {
     const {y, x} = this.state.startingPoint;
@@ -58,6 +64,7 @@ export default class extends React.Component<{}, State> {
           currentPoint = t.multiplicand.mult(currentPoint).add(t.additive);
           // console.log(currentPoint);
           points.push(matrixToPoint(currentPoint));
+          break;
         } else r -= t.chance;
       }
     }
@@ -68,10 +75,54 @@ export default class extends React.Component<{}, State> {
     this.setState(s => ({transformations: [...s.transformations, {multiplicand: new Matrix([[0,0],[0,0]]), additive: new Matrix([[0,0],[0,0]]), chance: 0}]}))
   };
 
+  setupDrawCont = (r: HTMLDivElement) => {
+    if (!this.drawCont && r) {
+      r.addEventListener("wheel", this.drawContEvent);
+      r.addEventListener("mousedown", this.drawContEvent);
+    }
+    this.drawCont = r;
+  };
+  drawContEvent = (e: MouseEvent|WheelEvent) => {
+    if (!this.drawCont) return;
+    switch (e.type) {
+      case "mousedown":
+        if (e.button) return;
+        this.drawCont.addEventListener("mousemove", this.drawContEvent);
+        this.drawCont.addEventListener("mouseup", this.drawContEvent);
+        this.startPoint = {x: e.clientX, y: e.clientY};
+        break;
+      case "mouseup":
+        this.drawCont.removeEventListener("mousemove", this.drawContEvent);
+        this.drawCont.removeEventListener("mouseup", this.drawContEvent);
+        break;
+      case "mousemove": {
+        if (!this.startPoint) {
+          this.startPoint = {x: e.clientX, y: e.clientY};
+           return;
+        }
+        const {offset, scale} = this.state.offset;
+        let currentPoint = {x: e.clientX, y: e.clientY};
+        offset.x -= (this.startPoint.x - currentPoint.x) / scale.width;
+        offset.y -= (this.startPoint.y - currentPoint.y) / scale.height;
+        this.setState(s => ({offset: {...s.offset, offset: offset}}));
+        this.startPoint = {x: e.clientX, y: e.clientY};
+        break;
+      }
+      case "wheel": {
+        const {scale} = this.state.offset;
+        const scaleNum = 1.15;
+        scale.height *= (Math.sign((e as WheelEvent).deltaY) > 0 ? 1/scaleNum : scaleNum);
+        scale.width  *= (Math.sign((e as WheelEvent).deltaY) > 0 ? 1/scaleNum : scaleNum);
+        this.setState(s => ({offset: {...s.offset, scale: scale}}));
+        break;
+      }
+    }
+  };
+
   render() {
-    const {display, offset, points, transformations, maxChance} = this.state;
+    const {display, offset, points, transformations, maxChance, startingPoint} = this.state;
     return <div className="container">
-      <div className="draw-board">
+      <div className="draw-board" ref={this.setupDrawCont}>
         {(() => {
           switch (display) {
             case Display.Raster: {
@@ -81,7 +132,7 @@ export default class extends React.Component<{}, State> {
               const {scale: {width: sx, height: sy}, offset: {x: ox, y: oy}} = offset;
               return <svg>
                 <g transform={`scale(${sx} ${sy}) translate(${ox} ${oy})`}>
-                  {points.map((v, k) => <circle cx={v.x} cy={v.y} r={1} key={k}/>)}
+                  {points.map((v, k) => <Circle v={v} key={k}/>)}
                 </g>
               </svg>;
             }
@@ -96,12 +147,29 @@ export default class extends React.Component<{}, State> {
         </div>
         <div className="separator"/>
         <div className="options">
-          {document.location.hash}<br/>
+          {/*{document.location.hash}<br/>*/}
+          {points.length} points generated<br/>
           <button onClick={() => this.generatePoints(3)}>Generate 3 points</button>
+          <button onClick={() => this.generatePoints(1000)}>Generate 1000 points</button>
           <button onClick={this.reset}>clear</button>
+          <br/>
+          <div className="mx-cont">
+            <div>Starting point</div>
+            <div className="matrix">
+              <div><input type="number" value={startingPoint.x} onChange={this.changeStartingPoint("x")}/></div>
+              <div><input type="number" value={startingPoint.y} onChange={this.changeStartingPoint("y")}/></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+  }
+}
+
+class Circle extends React.PureComponent<{v: Point}> {
+  render() {
+    const {y, x} = this.props.v;
+    return <circle cx={x} cy={y} r={1}/>;
   }
 }
 
@@ -135,7 +203,7 @@ class TransformationComp extends React.Component<TransformationProps> {
 
   render() {
     const {data, id, max} = this.props;
-    return <div>
+    return <div className="mx-cont">
       <div>
         <div>
           <input type="text" value={data.name || `Transformation #${id+1}`} onChange={this.changeName}/>

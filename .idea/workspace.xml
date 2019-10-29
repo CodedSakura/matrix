@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="c84634d4-df41-456b-a0de-4b777ec1f249" name="Default Changelist" comment="">
+    <list default="true" id="c84634d4-df41-456b-a0de-4b777ec1f249" name="Default Changelist" comment="Initial commit (part 4)">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/App.scss" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.scss" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/App.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/matrix.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/matrix.ts" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -86,7 +85,17 @@
       <workItem from="1571395297003" duration="10477000" />
       <workItem from="1572072203870" duration="1857000" />
       <workItem from="1572161844547" duration="12693000" />
+      <workItem from="1572260670652" duration="810000" />
+      <workItem from="1572342114906" duration="4472000" />
     </task>
+    <task id="LOCAL-00001" summary="Initial commit (part 4)">
+      <created>1572249022703</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1572249022704</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -104,5 +113,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Initial commit (part 4)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Initial commit (part 4)" />
   </component>
 </project>
