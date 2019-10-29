@@ -12,16 +12,14 @@ interface Transformation {
   name?: string
 }
 
-enum Display { SVG, Raster }
-
 interface State {
   transformations: Transformation[]
   offset: {scale: Dimensions, offset: Point}
   points: Point[]
   currentPoint: Matrix
   startingPoint: Point
-  display: Display
   maxChance: number
+  lockSize: boolean
 }
 
 const matrixToPoint = (m: Matrix): Point => ({x: m.data[0][0], y: m.data[1][0]});
@@ -40,8 +38,8 @@ export default class extends React.Component<{}, State> {
     points: [],
     currentPoint: new Matrix([[10], [10]]),
     startingPoint: {x: 10, y: 10},
-    display: Display.SVG,
-    maxChance: 300
+    maxChance: 300,
+    lockSize: true
   };
   drawCont: HTMLDivElement | undefined;
   startPoint: Point|undefined;
@@ -109,10 +107,12 @@ export default class extends React.Component<{}, State> {
         break;
       }
       case "wheel": {
-        const {scale} = this.state.offset;
+        const {offset, scale} = this.state.offset;
         const scaleNum = 1.15;
         scale.height *= (Math.sign((e as WheelEvent).deltaY) > 0 ? 1/scaleNum : scaleNum);
         scale.width  *= (Math.sign((e as WheelEvent).deltaY) > 0 ? 1/scaleNum : scaleNum);
+        offset.x += scaleNum;
+        offset.y += scaleNum;
         this.setState(s => ({offset: {...s.offset, scale: scale}}));
         break;
       }
@@ -120,23 +120,16 @@ export default class extends React.Component<{}, State> {
   };
 
   render() {
-    const {display, offset, points, transformations, maxChance, startingPoint} = this.state;
+    const {offset, points, transformations, maxChance, startingPoint, lockSize} = this.state;
     return <div className="container">
       <div className="draw-board" ref={this.setupDrawCont}>
         {(() => {
-          switch (display) {
-            case Display.Raster: {
-              return <canvas/>;
-            }
-            case Display.SVG: {
-              const {scale: {width: sx, height: sy}, offset: {x: ox, y: oy}} = offset;
-              return <svg>
-                <g transform={`scale(${sx} ${sy}) translate(${ox} ${oy})`}>
-                  {points.map((v, k) => <Circle v={v} key={k}/>)}
-                </g>
-              </svg>;
-            }
-          }
+          const {scale: {width: sx, height: sy}, offset: {x: ox, y: oy}} = offset;
+          return <svg>
+            <g transform={`scale(${sx} ${sy}) translate(${ox} ${oy})`}>
+              <CircleList points={points} size={lockSize ? 1 : 1/offset.scale.height} length={points.length}/>
+            </g>
+          </svg>;
         })()}
       </div>
       <div className="separator"/>
@@ -147,10 +140,10 @@ export default class extends React.Component<{}, State> {
         </div>
         <div className="separator"/>
         <div className="options">
-          {/*{document.location.hash}<br/>*/}
           {points.length} points generated<br/>
           <button onClick={() => this.generatePoints(3)}>Generate 3 points</button>
           <button onClick={() => this.generatePoints(1000)}>Generate 1000 points</button>
+          <button onClick={() => this.generatePoints(20000)}>Generate 20 000 points</button>
           <button onClick={this.reset}>clear</button>
           <br/>
           <div className="mx-cont">
@@ -160,16 +153,18 @@ export default class extends React.Component<{}, State> {
               <div><input type="number" value={startingPoint.y} onChange={this.changeStartingPoint("y")}/></div>
             </div>
           </div>
+          <button onClick={() => this.setState(s => ({lockSize: !s.lockSize}))}>Scale dot size ({lockSize ? "off" : "on"})</button><br/>
+          {document.location.hash}<br/>
         </div>
       </div>
     </div>
   }
 }
 
-class Circle extends React.PureComponent<{v: Point}> {
+class CircleList extends React.PureComponent<{points: Point[], size: number, length: number}> {
   render() {
-    const {y, x} = this.props.v;
-    return <circle cx={x} cy={y} r={1}/>;
+    const {points, size} = this.props;
+    return points.map((v, k) => <circle r={size} cx={v.x} cy={v.y} key={k}/>);
   }
 }
 
